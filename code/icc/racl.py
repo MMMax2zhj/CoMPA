@@ -1,4 +1,4 @@
-"""IMOL section 5.3, equations 9�C11: in-batch gold positive/hard negative.
+"""IMOL section 5.3, equations 9–11: in-batch gold positive/hard negative.
 
 Three-modality representation adaptation; this is not the full IMOL system.
 Mining is discrete, while selected cosine similarities retain both-side gradients.
