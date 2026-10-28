@@ -9,10 +9,10 @@ sys.path.insert(0, str(ROOT / 'code'))
 
 from icc.full_models import unified_model
 from icc.full_protocol import views
-from icc.reliability_gate import GatedUnified, ReliabilityGate
+from icc.vpa import CoMPA, VisibilityPredictionAggregator
 
 
-class V3ReleaseTests(unittest.TestCase):
+class CoMPAReleaseTests(unittest.TestCase):
     def test_two_and_three_modality_forward_and_hidden_isolation(self):
         torch.set_num_threads(2)
         settings = dict(hidden=8, heads=2, layers=1, memory_layers=1,
@@ -24,7 +24,7 @@ class V3ReleaseTests(unittest.TestCase):
             with self.subTest(modalities=modalities):
                 torch.manual_seed(20261024)
                 model = unified_model(dims, lengths, settings).set_stage('eval')
-                gated = GatedUnified(model, ReliabilityGate(len(dims))).eval()
+                gated = CoMPA(model, VisibilityPredictionAggregator(len(dims))).eval()
                 mask = torch.tensor(list(views(modalities).values()), dtype=torch.bool)
                 features = tuple(torch.randn(len(mask), length, dim)
                                  for length, dim in zip(lengths, dims))

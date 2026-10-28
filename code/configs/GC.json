@@ -1,5 +1,5 @@
 {
-  "method": "Unified_v3",
+  "method": "CoMPA-Backbone",
   "variant": "F111",
   "model": {
     "hidden": 128,

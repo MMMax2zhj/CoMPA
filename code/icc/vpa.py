@@ -1,4 +1,4 @@
-"""Single-forward, sample-wise reliability gate for a frozen Unified v3.
+"""CoMPA visibility-constrained prediction aggregation (VPA).
 
 The gate consumes the fusion and branch logits returned by the same model
 forward. Missing branches receive exactly zero weight. No label or second
@@ -9,7 +9,7 @@ from torch import nn
 import torch.nn.functional as F
 
 
-class ReliabilityGate(nn.Module):
+class VisibilityPredictionAggregator(nn.Module):
     def __init__(self, modalities: int):
         super().__init__()
         self.modalities = modalities
@@ -22,7 +22,7 @@ class ReliabilityGate(nn.Module):
 
     def forward(self, fused_logits, branch_logits, mask):
         if branch_logits.shape[1] != self.modalities or mask.shape != branch_logits.shape[:2]:
-            raise ValueError('Gate input dimensions do not match modalities')
+            raise ValueError('VPA input dimensions do not match modalities')
         if not mask.bool().any(1).all():
             raise ValueError('At least one modality must be present')
         fused = fused_logits.softmax(-1)[:, 1]
@@ -42,8 +42,8 @@ class ReliabilityGate(nn.Module):
         return probability, weights
 
 
-class GatedUnified(nn.Module):
-    """Inference adapter: exactly one call to the v3 model per batch."""
+class CoMPA(nn.Module):
+    """Inference adapter: one frozen backbone call followed by VPA."""
     def __init__(self, backbone, gate):
         super().__init__()
         self.backbone = backbone
@@ -52,9 +52,14 @@ class GatedUnified(nn.Module):
     def forward(self, features, mask):
         out = self.backbone(features, mask)
         probability, weights = self.gate(out['logits'], out['branch_logits'], mask)
-        out['v3_logits'] = out['logits']
-        out['v3_probabilities'] = out['probabilities']
-        out['gate_weights'] = weights
+        out['backbone_logits'] = out['logits']
+        out['backbone_probabilities'] = out['probabilities']
+        out['vpa_weights'] = weights
         out['probabilities'] = torch.stack((1 - probability, probability), -1)
         out['logits'] = out['probabilities'].clamp_min(1e-8).log()
         return out
+
+
+# Historical imports remain loadable for code that evaluates archived V3-RG runs.
+ReliabilityGate = VisibilityPredictionAggregator
+GatedUnified = CoMPA

@@ -1,4 +1,4 @@
-"""Train one full-plan development/formal cell; never predict D_test.
+"""Train the CoMPA backbone with staged VPC, MPD, and DCR objectives.
 
 The independent evaluator is permitted only after a frozen selection manifest.
 """
@@ -108,7 +108,7 @@ def main():
     start_implementation=implementation_hash()
     settings=json.loads(Path(a.config).read_text(encoding='utf-8'))
     method=settings['method'];variant=settings.get('variant','F111')
-    if method != 'Unified_v3': raise ValueError('Only Unified_v3 is supported')
+    if method != 'CoMPA-Backbone': raise ValueError('Only CoMPA-Backbone is supported')
     recipe=copy.deepcopy(settings.get('recipe',RECIPE));model_settings={**DEFAULT_MODEL,**settings.get('model',{})}
     if a.smoke_epochs is not None:
         recipe['stages']={s:a.smoke_epochs for s in recipe['stages']}
